@@ -218,7 +218,7 @@ find_binary() {
 # Install binary executable, and all shared library dependencies, if any.
 inst_binary() {
     local _bin _target
-    _bin=$(find_binary "$1") || { dwarn "inst_binary: $1 not found"; return 1; }
+    _bin=$(find_binary "$1") || { echo "inst_binary: $1 not found"; return 1; }
     _target=${2:-$_bin}
     [[ -e $initdir/$_target ]] && return 0
     [[ -L $_bin ]] && inst_symlink $_bin $_target && return 0
@@ -250,7 +250,7 @@ inst_binary() {
 # If your shell script does not start with shebang, it is not a shell script.
 inst_script() {
     local _bin
-    _bin=$(find_binary "$1") || { dwarn "inst_script: $1 not found"; return 1; }
+    _bin=$(find_binary "$1") || { echo "inst_script: $1 not found"; return 1; }
     shift
     local _line _shebang_regex
     read -r -n 80 _line <"$_bin"
