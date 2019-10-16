@@ -203,9 +203,18 @@ inst_library() {
 # find a binary.  If we were not passed the full path directly,
 # search in the usual places to find the binary.
 find_binary() {
-    if [[ -z ${1##/*} ]]; then
-        if [[ -x $PLYMOUTH_SYSROOT$1 ]] || { strstr "$1" ".so" && $PLYMOUTH_LDD $PLYMOUTH_SYSROOT$1 &>/dev/null; };  then
-            echo $1
+    local _delim
+    [[ -z ${1##/*} ]] || _delim="/"
+
+    if [[ "$1" == *.so* ]]; then
+        if { $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_delim$1" &>/dev/null; }; then
+            printf "%s\n" "$1"
+            return 0
+        fi
+    fi
+    if [[ "$1" == */* ]]; then
+        if [[ -L $PLYMOUTH_SYSROOT$_delim$1 ]] || [[ -x $PLYMOUTH_SYSROOT$_delim$1 ]]; then
+            printf "%s\n" "$1"
             return 0
         fi
     fi
