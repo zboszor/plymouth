@@ -4,7 +4,7 @@
 
 [ -z "$DESTDIR" ] || exit 0
 
-# For running on a (cross-compiled sysroot), the following
+# For running on a (cross-compiled) sysroot, the following
 # settings are needed:
 # PLYMOUTH_SYSROOT - the sysroot directory
 # PLYMOUTH_LDD - an optional ldd command that works on foreign binaries
@@ -233,18 +233,13 @@ find_binary() {
 # Install binary executable, and all shared library dependencies, if any.
 inst_binary() {
     local _bin _target
-    _bin=$(find_binary "$1") || { echo "inst_binary: $1 not found"; return 1; }
+    _bin=$(find_binary "$1") || return 1
     _target=${2:-$_bin}
     [[ -e $initdir/$_target ]] && return 0
     [[ -L $_bin ]] && inst_symlink $_bin $_target && return 0
     local _file _line
     local _so_regex='([^ ]*/lib[^/]*/[^ ]*\.so[^ ]*)'
     # I love bash!
-    echo "Running $PLYMOUTH_LDD \"$PLYMOUTH_SYSROOT$_bin\""
-    echo "-------------------------------"
-    LC_ALL=C PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin"
-    echo "-------------------------------"
-
     LC_ALL=C PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin" 2>/dev/null | while read _line; do
         [[ $_line = 'not a dynamic executable' ]] && break
 
@@ -263,8 +258,6 @@ inst_binary() {
             exit 1
         fi
     done
-    echo "-------------------------------"
-    echo "inst_binary: last step inst_simple $_bin -> $_target"
     inst_simple "$_bin" "$_target"
 }
 
@@ -272,7 +265,7 @@ inst_binary() {
 # If your shell script does not start with shebang, it is not a shell script.
 inst_script() {
     local _bin
-    _bin=$(find_binary "$1") || { echo "inst_script: $1 not found"; return 1; }
+    _bin=$(find_binary "$1") || return 1
     shift
     local _line _shebang_regex
     read -r -n 80 _line <"$PLYMOUTH_SYSROOT$_bin"
