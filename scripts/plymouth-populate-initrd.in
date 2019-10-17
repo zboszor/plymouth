@@ -8,8 +8,10 @@
 # settings are needed:
 # PLYMOUTH_SYSROOT - the sysroot directory
 # PLYMOUTH_LDD - an optional ldd command that works on foreign binaries
+# PLYMOUTH_LDD_PATH - optional PATH ldd is run with
 
 [ -z "$PLYMOUTH_LDD" ] && PLYMOUTH_LDD="ldd"
+[ -z "$PLYMOUTH_LDD_PATH" ] && PLYMOUTH_LDD_PATH="$PATH"
 [ -z "$PLYMOUTH_LIBEXECDIR" ] && PLYMOUTH_LIBEXECDIR="@PLYMOUTH_LIBEXECDIR@"
 [ -z "$PLYMOUTH_DATADIR" ] && PLYMOUTH_DATADIR="@PLYMOUTH_DATADIR@"
 [ -z "$PLYMOUTH_PLUGIN_PATH" ] && PLYMOUTH_PLUGIN_PATH="$(plymouth --get-splash-plugin-path)"
@@ -207,7 +209,7 @@ find_binary() {
     [[ -z ${1##/*} ]] || _delim="/"
 
     if [[ "$1" == *.so* ]]; then
-        if { $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_delim$1" &>/dev/null; }; then
+        if { PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_delim$1" &>/dev/null; }; then
             printf "%s\n" "$1"
             return 0
         fi
@@ -234,7 +236,7 @@ inst_binary() {
     local _file _line
     local _so_regex='([^ ]*/lib[^/]*/[^ ]*\.so[^ ]*)'
     # I love bash!
-    LC_ALL=C $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin" 2>/dev/null | while read _line; do
+    LC_ALL=C PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin" 2>/dev/null | while read _line; do
         [[ $_line = 'not a dynamic executable' ]] && break
 
         if [[ $_line =~ $_so_regex ]]; then
@@ -404,6 +406,7 @@ done
 
 ddebug "Running with PLYMOUTH_SYSROOT=$PLYMOUTH_SYSROOT"
 ddebug "Running with PLYMOUTH_LDD=$PLYMOUTH_LDD"
+ddebug "Running with PLYMOUTH_LDD_PATH=$PLYMOUTH_LDD_PATH"
 
 mkdir -p ${INITRDDIR}${PLYMOUTH_DATADIR}/plymouth/themes
 inst ${PLYMOUTH_DAEMON_PATH} $INITRDDIR
