@@ -177,7 +177,7 @@ rev_lib_symlinks() {
 # is referenced.
 inst_library() {
     local _src="$1" _dest=${2:-$1} _reallib _symlink
-    strstr "$1" "/" || return 1
+    strstr "$1" "/" || { echo "inst_library: $1 invalid filename" >&2 ; return 1; }
     [[ -e $initdir/$_dest ]] && return 0
     if [[ -L $PLYMOUTH_SYSROOT$_src ]]; then
         # install checksum files also
@@ -236,6 +236,11 @@ inst_binary() {
     local _file _line
     local _so_regex='([^ ]*/lib[^/]*/[^ ]*\.so[^ ]*)'
     # I love bash!
+    echo "Running $PLYMOUTH_LDD \"$PLYMOUTH_SYSROOT$_bin\""
+    echo "-------------------------------"
+    LC_ALL=C PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin"
+    echo "-------------------------------"
+
     LC_ALL=C PATH="$PLYMOUTH_LDD_PATH" $PLYMOUTH_LDD "$PLYMOUTH_SYSROOT$_bin" 2>/dev/null | while read _line; do
         [[ $_line = 'not a dynamic executable' ]] && break
 
@@ -254,6 +259,8 @@ inst_binary() {
             exit 1
         fi
     done
+    echo "-------------------------------"
+    echo "inst_binary: last step inst_simple $_bin -> $_target"
     inst_simple "$_bin" "$_target"
 }
 
