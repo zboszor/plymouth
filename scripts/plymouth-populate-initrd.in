@@ -185,9 +185,13 @@ inst_library() {
             inst "${_src%/*}/.${_src##*/}.hmac" "${_dest%/*}/.${_dest##*/}.hmac"
         fi
         _reallib=$(readlink -f "$PLYMOUTH_SYSROOT$_src")
+        _reallib=${_reallib#$PLYMOUTH_SYSROOT}
         inst_simple "$_reallib" "$_reallib"
         inst_dir "${_dest%/*}"
-        [[ -d "$PLYMOUTH_SYSROOT${_dest%/*}" ]] && _dest=$(readlink -f "$PLYMOUTH_SYSROOT${_dest%/*}")/${_dest##*/}
+        if [[ -d "$PLYMOUTH_SYSROOT${_dest%/*}" ]]; then
+            _dest=$(readlink -f "$PLYMOUTH_SYSROOT${_dest%/*}")/${_dest##*/}
+            _dest=${_dest#$PLYMOUTH_SYSROOT}
+        fi
         ln -sfn $(convert_abs_rel "${_dest}" "${_reallib}") "${initdir}/${_dest}"
     else
         inst_simple "$_src" "$_dest"
