@@ -275,7 +275,7 @@ inst_script() {
     _bin=$(find_binary "$1") || { echo "inst_script: $1 not found"; return 1; }
     shift
     local _line _shebang_regex
-    read -r -n 80 _line <"$_bin"
+    read -r -n 80 _line <"$PLYMOUTH_SYSROOT$_bin"
     # If debug is set, clean unprintable chars to prevent messing up the term
     [[ $debug ]] && _line=$(echo -n "$_line" | tr -c -d '[:print:][:space:]')
     _shebang_regex='(#! *)(/[^ ]+).*'
@@ -287,10 +287,10 @@ inst_script() {
 inst_symlink() {
     local _src=$1 _target=${2:-$1} _realsrc
     strstr "$1" "/" || return 1
-    [[ -L $PLYMOUTH_SYSROOT$1 ]] || return 1
+    [[ -L $PLYMOUTH_SYSROOT$_src ]] || return 1
     [[ -L $initdir/$_target ]] && return 0
-    _realsrc=$(readlink -f "$_src")
-    [[ -n "$PLYMOUTH_SYSROOT" ]] && _realsrc=${_realsrc#$PLYMOUTH_SYSROOT}
+    _realsrc=$(readlink -f "$PLYMOUTH_SYSROOT$_src")
+    _realsrc=${_realsrc#$PLYMOUTH_SYSROOT}
     if ! [[ -e $initdir/$_realsrc ]]; then
         if [[ -d $PLYMOUTH_SYSROOT$_realsrc ]]; then
             inst_dir "$_realsrc"
